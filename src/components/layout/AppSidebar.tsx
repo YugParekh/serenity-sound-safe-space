@@ -71,8 +71,6 @@ export function AppSidebar({ userType }: AppSidebarProps) {
 
   return (
     <Sidebar
-      defaultCollapsed={isCollapsed}
-      onCollapseChange={setIsCollapsed}
       className="border-r"
     >
       <SidebarHeader className="flex h-16 items-center px-4">
