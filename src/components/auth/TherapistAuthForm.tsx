@@ -3,186 +3,241 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Shield, Upload, Check } from "lucide-react";
+import { Loader2, Shield } from "lucide-react";
 
 interface TherapistAuthFormProps {
   onSuccess: (email: string) => void;
 }
 
 export function TherapistAuthForm({ onSuccess }: TherapistAuthFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [license, setLicense] = useState("");
-  const [specialization, setSpecialization] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
+  const [yearsExperience, setYearsExperience] = useState("");
+  const [specialties, setSpecialties] = useState("");
   const [bio, setBio] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [documentUploaded, setDocumentUploaded] = useState(false);
+  const { signIn, signUp } = useAuth();
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    
-    if (!documentUploaded) {
-      toast.error("Please upload your credentials");
-      return;
-    }
-    
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Simulate verification process
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      toast.success("Registration submitted for verification!");
-      onSuccess(email);
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Welcome back!");
+        onSuccess(email);
+      }
     } catch (error) {
-      toast.error("Registration failed. Please try again.");
+      toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFileUpload = () => {
-    // Simulate file upload
-    setTimeout(() => {
-      setDocumentUploaded(true);
-      toast.success("Document uploaded successfully");
-    }, 1500);
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { error } = await signUp(email, password, {
+        first_name: firstName,
+        last_name: lastName,
+        role: 'therapist',
+        license_number: licenseNumber,
+        years_experience: parseInt(yearsExperience),
+        specialties: specialties.split(',').map(s => s.trim()),
+        bio: bio
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Therapist account created! Please check your email and wait for verification.");
+        onSuccess(email);
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="w-full">
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-center">Therapist Registration</h2>
-        <p className="text-muted-foreground text-center mt-2">
-          Join our platform to provide mental health support
-        </p>
-      </div>
+    <Tabs defaultValue="signin" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="signin">Sign In</TabsTrigger>
+        <TabsTrigger value="signup">Join Our Network</TabsTrigger>
+      </TabsList>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="Dr. Jane Smith"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="email">Professional Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="dr.jane@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="license">License Number</Label>
-          <Input
-            id="license"
-            type="text"
-            placeholder="PSY12345"
-            value={license}
-            onChange={(e) => setLicense(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="specialization">Specialization</Label>
-          <Input
-            id="specialization"
-            type="text"
-            placeholder="Anxiety, Depression, PTSD"
-            value={specialization}
-            onChange={(e) => setSpecialization(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="bio">Professional Bio</Label>
-          <Textarea
-            id="bio"
-            placeholder="Share your experience and approach to therapy..."
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            required
-            className="min-h-[100px]"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div className="border rounded-md p-4 space-y-3">
-          <Label className="block">Upload Credentials</Label>
-          <p className="text-sm text-muted-foreground">
-            Please upload your license and certification documents for verification
-          </p>
-          
-          <div className="flex items-center justify-center w-full">
-            <label
-              htmlFor="dropzone-file"
-              className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer
-                ${documentUploaded ? 'border-serenity-500 bg-serenity-50' : 'border-gray-300 hover:bg-gray-50'}`}
-            >
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                {documentUploaded ? (
-                  <>
-                    <Check className="w-8 h-8 mb-2 text-serenity-600" />
-                    <p className="text-sm text-serenity-600">Document uploaded successfully</p>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-8 h-8 mb-2 text-gray-500" />
-                    <p className="text-sm text-gray-500">Click to upload documents</p>
-                  </>
-                )}
+      <TabsContent value="signin">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Shield className="mr-2 h-5 w-5 text-serenity-600" />
+              Therapist Portal
+            </CardTitle>
+            <CardDescription>
+              Sign in to your professional account to connect with clients.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Professional Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="therapist@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
-              <input id="dropzone-file" type="file" className="hidden" onChange={handleFileUpload} />
-            </label>
-          </div>
-        </div>
-        
-        <div className="flex items-start space-x-2 text-sm">
-          <div className="pt-1 text-serenity-600">
-            <Shield size={16} />
-          </div>
-          <p className="text-muted-foreground">
-            We verify all therapist credentials. This process may take 1-3 business days.
-          </p>
-        </div>
-        
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Submitting for verification..." : "Submit Registration"}
-        </Button>
-      </form>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Sign In to Portal
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </TabsContent>
       
-      <div className="mt-6 flex items-center justify-center">
-        <Badge variant="outline" className="bg-serenity-50 text-serenity-700">
-          Verified Therapists Only
-        </Badge>
-      </div>
-    </div>
+      <TabsContent value="signup">
+        <Card>
+          <CardHeader>
+            <CardTitle>Join Our Professional Network</CardTitle>
+            <CardDescription>
+              Apply to become a verified therapist on Serenity. All applications are reviewed for credentials and experience.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="Dr. Jane"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Smith"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Professional Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="therapist@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Create a secure password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="licenseNumber">License Number</Label>
+                  <Input
+                    id="licenseNumber"
+                    placeholder="LIC123456"
+                    value={licenseNumber}
+                    onChange={(e) => setLicenseNumber(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="yearsExperience">Years Experience</Label>
+                  <Input
+                    id="yearsExperience"
+                    type="number"
+                    placeholder="5"
+                    value={yearsExperience}
+                    onChange={(e) => setYearsExperience(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="specialties">Specialties (comma-separated)</Label>
+                <Input
+                  id="specialties"
+                  placeholder="Anxiety, Depression, CBT, Trauma"
+                  value={specialties}
+                  onChange={(e) => setSpecialties(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="bio">Professional Bio</Label>
+                <Textarea
+                  id="bio"
+                  placeholder="Tell us about your background, approach, and experience..."
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit Application
+              </Button>
+              
+              <p className="text-xs text-muted-foreground text-center">
+                Applications are reviewed within 2-3 business days. You'll receive an email once approved.
+              </p>
+            </form>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -1,21 +1,40 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserAuthForm } from "@/components/auth/UserAuthForm";
 import { TherapistAuthForm } from "@/components/auth/TherapistAuthForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Headphones, Shield, MessageSquare, BookOpen, Check } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("about");
   
+  useEffect(() => {
+    if (user && !loading) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
+  
   const handleAuthSuccess = (email: string) => {
-    // In a real app, we'd set auth state and redirect based on user role
-    navigate("/dashboard");
+    // User will be redirected by the useEffect above once auth state updates
   };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-serenity-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 rounded-full bg-serenity-500 flex items-center justify-center mx-auto mb-4">
+            <span className="font-bold text-2xl text-white">S</span>
+          </div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-serenity-50 to-white">
@@ -197,7 +216,7 @@ const Index = () => {
                     <div className="border rounded-lg p-4 hover:bg-serenity-50 transition-colors">
                       <div className="flex items-center space-x-2 mb-2">
                         <div className="h-8 w-8 rounded-full bg-serenity-100 flex items-center justify-center">
-                          <svg className="h-4 w-4 text-serenity-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                          <svg className="h-4 w-4 text-serenity-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2 2h-4a2 2 0 0 0-2 2v16"/></svg>
                         </div>
                         <h3 className="font-medium">Resource Library</h3>
                       </div>
